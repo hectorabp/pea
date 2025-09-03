@@ -1,0 +1,504 @@
+{
+  "name": "pea_flow",
+  "nodes": [
+    {
+      "parameters": {
+        "channels": "whatsapp",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.redisTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "be52b2d7-cd4f-4769-b237-222f0a1cf301",
+      "name": "Redis Trigger",
+      "credentials": {
+        "redis": {
+          "id": "Ypb9NlV7YdHSSEYh",
+          "name": "Redis account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a778ebab-5115-4d27-965d-d96118fa8e4e",
+              "name": "message",
+              "value": "={{ $json.message }}",
+              "type": "object"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        220,
+        0
+      ],
+      "id": "68e68798-3c50-4734-9d3d-4f3f492f85a7",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://backend_pea:5000/api/process_message",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "content",
+              "value": "={\"role\": \"user\", \"text\": \"{{ $json.message.message }}\"}"
+            },
+            {
+              "name": "tokens",
+              "value": "{\"prompt_tokens\": 0, \"completion_tokens\": 0, \"total_tokens\": 0}"
+            },
+            {
+              "name": "send_data",
+              "value": "{\"audio\": null, \"image\": null, \"location\": null, \"document\": null, \"video\": null}"
+            },
+            {
+              "name": "phone",
+              "value": "={{ $json.message.phone }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        440,
+        0
+      ],
+      "id": "87e1329a-efe4-478f-8338-8bfea81483a0",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "jsCode": "// n8n Function node\n// Recibe items del nodo HTTP Request y normaliza a:\n// item.json.conversation = { messages: [...], send: {...}, session_id: \"...\", state: [...], transmitter: \"...\" }\n\nreturn items.map(item => {\n  const json = item.json || {};\n\n  const conversation = json.conversation || {};\n  const session_id = conversation.session_id ?? String(Date.now());\n  const state = conversation.state ?? [];\n  const transmitter = conversation.transmitter ?? json.transmitter ?? null;\n\n  // Construir mensajes a partir de conversation.message (si existe)\n  let messages = [];\n  if (Array.isArray(conversation.message)) {\n    messages = conversation.message.map(msg => ({\n      role: msg.role || 'user',\n      content: [\n        {\n          type: 'text',\n          text: String(msg.content ?? '')\n        }\n      ]\n    }));\n  } else {\n    // fallback si viene un único mensaje suelto\n    const userText = (\n      json.message?.text ??\n      json.message ??\n      json.content ??\n      json.text ??\n      \"\"\n    );\n    messages = [\n      {\n        role: 'user',\n        content: [{ type: 'text', text: String(userText) }]\n      }\n    ];\n  }\n\n  // Extraer último \"send\" disponible (o default vacío)\n  const lastSend = Array.isArray(conversation.message) && conversation.message.length > 0\n    ? conversation.message[conversation.message.length - 1].send\n    : { audio: null, document: null, image: null, location: null, video: null };\n\n  item.json.conversation = {\n    messages,\n    send: lastSend,\n    session_id,\n    state,\n    transmitter\n  };\n\n  return item;\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        660,
+        0
+      ],
+      "id": "21dfeb6d-9aa7-49ee-ba89-33fdcf05030c",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "e8f55273-a52f-45aa-878c-60acf1c9a8fc",
+              "name": "conversation.messages",
+              "value": "={{ $json.conversation.messages }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        880,
+        0
+      ],
+      "id": "41e9b54b-dcf5-4be8-b198-da8e85e15d0e",
+      "name": "Edit Fields1"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "ffdc0660-fffc-48c2-b6f5-6d0430014e0e",
+              "name": "message.content",
+              "value": "={{ $json.message.content }}",
+              "type": "object"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1600,
+        0
+      ],
+      "id": "04ef15b8-8c6a-4a29-8c0e-8d7e7df012b5",
+      "name": "Edit Fields2"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "3796fd17-7c4c-47c7-bca2-d24fc07ed7d7",
+              "name": "title",
+              "value": "Premio Emprendedor del Año (PEA)",
+              "type": "string"
+            },
+            {
+              "id": "f2f97180-f9d2-40ea-a8f5-4a03e03b921e",
+              "name": "content",
+              "value": "### **Premio Emprendedor del Año (PEA)**  El **Premio Emprendedor del Año (PEA)** es una iniciativa del Ministerio de Industria y Comercio de Paraguay, en colaboración con otras instituciones, que busca reconocer y premiar a los emprendedores que, a través de su trabajo e innovación, impulsan el desarrollo económico y social del país. El premio celebra a quienes transforman sus ideas en realidades.  ### **Objetivos Principales**  * **Reconocimiento y Visibilidad:** Destacar el talento emprendedor que contribuye al progreso de Paraguay.   * **Fortalecer el Ecosistema:** Promover el intercambio de ideas, buenas prácticas y redes de colaboración entre emprendedores.   * **Fomentar el Crecimiento:** Incentivar la formalización, innovación y el compromiso con el desarrollo económico del país.   * **Inspirar a Nuevas Generaciones:** Mostrar ejemplos de éxito para motivar el espíritu emprendedor en la sociedad.  ### **Categorías del Premio**  El premio selecciona a emprendimientos destacados en diferentes categorías, con el objetivo de valorar la innovación y el impacto a nivel nacional. Aunque las categorías pueden variar, las más comunes mencionadas en ediciones recientes incluyen:  * **Emprendedor/a del Año**   * **Juventud Emprendedora**   * **Mujer Emprendedora**   * **Emprendimiento Innovador**   * **Emprendimiento Tecnológico**   * **Emprendimiento eCommerce**   * **Emprendimiento Cultural o Creativo**   * **Emprendimiento Sostenible**   * **Emprendimiento Familiar**   * **Emprendimiento Favorito del Año (por votación del público)**  ### **Cómo Participar**  Las bases y condiciones para la postulación se publican en el Portal Emprendedor del Ministerio de Industria y Comercio. Generalmente, se requiere que los participantes sean emprendedores paraguayos que cumplen con ciertos criterios, como tener un emprendimiento formalizado o una idea de negocio en marcha. Las convocatorias suelen tener plazos definidos para la inscripción de proyectos.  ### **Contacto y Organizadores**  El premio es una colaboración del **Ministerio de Industria y Comercio (MIC)** y otras organizaciones del ecosistema emprendedor. Para más información, se pueden utilizar los correos electrónicos: dinaem@mic.gov.py o premioemprendedorparaguay@gmail.com.  Web: www.premioemprendedor.com.py",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        300,
+        480
+      ],
+      "id": "2404bcf4-1e57-4115-bb0b-6e38f5604ac5",
+      "name": "Edit Fields3"
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "tableName": {
+          "__rl": true,
+          "value": "documents",
+          "mode": "list",
+          "cachedResultName": "documents"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1,
+      "position": [
+        540,
+        480
+      ],
+      "id": "94f0de4e-8a54-4a91-979e-8d72693712e0",
+      "name": "Supabase Vector Store",
+      "credentials": {
+        "supabaseApi": {
+          "id": "yqo2sZK2sOmO9aSz",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        480,
+        720
+      ],
+      "id": "6efb0729-a4f1-4d58-8604-1a7f753aadf7",
+      "name": "Embeddings OpenAI",
+      "credentials": {
+        "openAiApi": {
+          "id": "zTY3ZJHgiATclOpG",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "typeVersion": 1,
+      "position": [
+        680,
+        700
+      ],
+      "id": "379a4060-7a64-4da1-bb6e-0989660de56c",
+      "name": "Default Data Loader"
+    },
+    {
+      "parameters": {
+        "chunkSize": 500
+      },
+      "type": "@n8n/n8n-nodes-langchain.textSplitterCharacterTextSplitter",
+      "typeVersion": 1,
+      "position": [
+        780,
+        920
+      ],
+      "id": "6e70baf8-3a90-451a-b181-30822696aee7",
+      "name": "Character Text Splitter"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        1400,
+        480
+      ],
+      "id": "1e155e2c-a208-4803-9d6c-41e727a4724d",
+      "name": "Embeddings OpenAI1",
+      "credentials": {
+        "openAiApi": {
+          "id": "zTY3ZJHgiATclOpG",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "retrieve-as-tool",
+        "toolName": "Nodo_Conocimiento_PEA",
+        "toolDescription": "Usa esto para obtener información del evento Premio Emprendedor del Año y así poder responder de forma más precisa a los participantes",
+        "tableName": {
+          "__rl": true,
+          "value": "documents",
+          "mode": "list",
+          "cachedResultName": "documents"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1,
+      "position": [
+        1280,
+        200
+      ],
+      "id": "46d543fa-b697-419a-bbd3-5bdef4763f15",
+      "name": "Nodo_Conocimiento_PEA",
+      "credentials": {
+        "supabaseApi": {
+          "id": "yqo2sZK2sOmO9aSz",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-5-mini-2025-08-07",
+          "mode": "list",
+          "cachedResultName": "GPT-5-MINI-2025-08-07"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "={{ $json.conversation.messages }}"
+            },
+            {
+              "content": "=Eres un asistente virtual amable y conciso.  \nTu tarea es responder siempre de manera **corta, clara y directa**, sin dar explicaciones largas ni textos extensos.  \n\nUsa la información relevante que se te proporciona (por ejemplo, contexto de Nodo_Conocimiento_PEA) solo si es necesario para responder la consulta.  \nSi el usuario solo saluda, responde con un saludo breve y cordial, como: \"Hola, ¿en qué puedo ayudarle?\"  \n\nSiempre responde en **JSON válido**, con este formato exacto:\n\n{\n  \"text\": \"Aquí va la respuesta breve y amable\",\n  \"transmitter\": \"{{ $('Code').item.json.conversation.transmitter }}\"\n}\n\nReglas:\n- Mantén el campo `text` corto y amigable.\n- No agregues información adicional si no se pregunta explícitamente.\n- El campo `transmitter` se completará dinámicamente en N8N.\n",
+              "role": "system"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        1100,
+        0
+      ],
+      "id": "e44b30d2-0c50-4d34-a93a-0252b5a0fd77",
+      "name": "OpenAI",
+      "credentials": {
+        "openAiApi": {
+          "id": "zTY3ZJHgiATclOpG",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "publish",
+        "channel": "whatsapp",
+        "messageData": "={\"transmitter\": \"N8N\",\"phone\": {{ $json.message.content.transmitter }},\"name\": \"\",\"message\": \"{{ $json.message.content.text }}\",\"send\": {}}"
+      },
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        1820,
+        0
+      ],
+      "id": "a0f50e88-9169-4cb3-ac73-a2b73a8eb90f",
+      "name": "Redis",
+      "credentials": {
+        "redis": {
+          "id": "Ypb9NlV7YdHSSEYh",
+          "name": "Redis account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Redis Trigger": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields1": {
+      "main": [
+        [
+          {
+            "node": "OpenAI",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields3": {
+      "main": [
+        [
+          {
+            "node": "Supabase Vector Store",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings OpenAI": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Supabase Vector Store",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Default Data Loader": {
+      "ai_document": [
+        [
+          {
+            "node": "Supabase Vector Store",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Character Text Splitter": {
+      "ai_textSplitter": [
+        [
+          {
+            "node": "Default Data Loader",
+            "type": "ai_textSplitter",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings OpenAI1": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Nodo_Conocimiento_PEA",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Nodo_Conocimiento_PEA": {
+      "ai_tool": [
+        [
+          {
+            "node": "OpenAI",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields2": {
+      "main": [
+        [
+          {
+            "node": "Redis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "da15b7c1-0f84-4f2b-812f-41d9498d7b74",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "23d5046bbb3e35f97680d1705685f5a692dccd95b1092f7b5e330a15bf570c0a"
+  },
+  "id": "s4IUzAKT5Y4wuLsP",
+  "tags": []
+}
