@@ -4,8 +4,6 @@ services:
     image: mongo:5.0
     restart: unless-stopped
     container_name: mongo_pea
-    ports:
-      - "27017:27017"
     environment:
       # Estas variables inicializan el usuario root de MongoDB
       - MONGO_INITDB_ROOT_USERNAME=${MONGO_USERNAME}
@@ -20,13 +18,11 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    ports:
-      - "5000:5000"
     container_name: backend_pea
     restart: unless-stopped
     environment:
       - FLASK_ENV=development
-      - DB_MONGO_HOST=mongo
+      - DB_MONGO_HOST=mongo_pea
       - DB_MONGO_NAME=${MONGO_DATABASE}
       - DB_MONGO_USER=${MONGO_USERNAME}
       - DB_MONGO_PASS=${MONGO_PASSWORD}
@@ -39,8 +35,6 @@ services:
     build:
       context: ./whatsapp
       dockerfile: Dockerfile
-    ports:
-      - "3000:3000"
     container_name: whatsapp_bot_pea
     restart: unless-stopped
     environment:
@@ -50,7 +44,14 @@ services:
       - REDIS_PASSWORD=${REDIS_PEA_PASSWORD}
     networks:
       - platcom_net
-
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.whatsapp.rule=Host(`${DOMAIN_HOST}`) && PathPrefix(`/whatsapp_pea`)"
+      - "traefik.http.routers.whatsapp.entrypoints=web"
+      - "traefik.http.services.whatsapp.loadbalancer.server.port=3000"
+      - "traefik.http.middlewares.whatsapp-strip.stripprefix.prefixes=/whatsapp_pea"
+      - "traefik.http.middlewares.whatsapp-strip.stripprefix.forceSlash=true"
+      - "traefik.http.routers.whatsapp.middlewares=whatsapp-strip"
 
 networks:
   platcom_net:
