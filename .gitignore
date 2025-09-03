@@ -26,7 +26,6 @@ dist/
 node_modules/
 
 # Docker
-docker-compose.yml
 **/.env
 
 # OS files

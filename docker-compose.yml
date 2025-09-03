@@ -1,0 +1,61 @@
+
+services:
+  mongo:
+    image: mongo:5.0
+    restart: unless-stopped
+    container_name: mongo_pea
+    ports:
+      - "27017:27017"
+    environment:
+      # Estas variables inicializan el usuario root de MongoDB
+      - MONGO_INITDB_ROOT_USERNAME=${MONGO_USERNAME}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_PASSWORD}
+      - MONGO_INITDB_DATABASE=${MONGO_DATABASE}
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - platcom_net
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
+    container_name: backend_pea
+    restart: unless-stopped
+    environment:
+      - FLASK_ENV=development
+      - DB_MONGO_HOST=mongo
+      - DB_MONGO_NAME=${MONGO_DATABASE}
+      - DB_MONGO_USER=${MONGO_USERNAME}
+      - DB_MONGO_PASS=${MONGO_PASSWORD}
+    networks:
+      - platcom_net
+    volumes:
+      - ./backend:/app
+
+  whatsapp:
+    build:
+      context: ./whatsapp
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    container_name: whatsapp_bot_pea
+    restart: unless-stopped
+    environment:
+      - TZ=America/Asuncion
+      - REDIS_HOST=${REDIS_PEA_HOST}
+      - REDIS_PORT=${REDIS_PEA_PORT}
+      - REDIS_PASSWORD=${REDIS_PEA_PASSWORD}
+    networks:
+      - platcom_net
+
+
+networks:
+  platcom_net:
+    external: true
+    name: platcom_net
+
+volumes:
+  mongo_data:
