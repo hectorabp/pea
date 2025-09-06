@@ -10,7 +10,13 @@ COPY package.json package-lock.json ./
 RUN npm install
 
 # Copiar el resto de los archivos
-COPY . .
+COPY config/ ./config
+COPY routes/ ./routes
+COPY service/ ./service
+COPY index.js ./index.js
+COPY auth_state.js ./auth_state.js
+COPY clean_redis_auth.js ./clean_redis_auth.js
+
 
 ENV TZ=America/Asuncion
 

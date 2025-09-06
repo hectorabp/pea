@@ -20,7 +20,7 @@ const app = express();
 app.use(bodyParser.json());
 
 // Montar el router de rutas de WhatsApp bajo /whatsapp
-app.use('/whatsapp', whatsappRoutes);
+app.use('/whatsapp/pea', whatsappRoutes);
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
