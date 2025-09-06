@@ -14,6 +14,9 @@ COPY controller /app/controller
 COPY modules /app/modules
 COPY app.py /app/app.py
 
+# Establecer PYTHONUNBUFFERED para desactivar el búfer
+ENV PYTHONUNBUFFERED=1
+
 # Variables para Flask
 ENV FLASK_APP=app.py
 ENV FLASK_RUN_HOST=0.0.0.0

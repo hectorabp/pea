@@ -1,6 +1,6 @@
 
 services:
-  mongo:
+  mongo_pea:
     image: mongo:5.0
     restart: unless-stopped
     container_name: mongo_pea

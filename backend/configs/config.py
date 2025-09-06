@@ -16,11 +16,6 @@ class Database_conversation:
         self.password = os.getenv('DB_MONGO_PASS')
         self.client = None
         self.db = None
-        # NOTA IMPORTANTE: Si cambias usuario o contraseña de MongoDB en el archivo .env o docker-compose.yml,
-        # debes eliminar el volumen de datos de MongoDB para que los cambios tengan efecto.
-        # Usa: docker-compose down -v && docker-compose up -d --build
-        # IMPORTANTE: El usuario root de MongoDB se autentica en la base de datos 'admin' por defecto.
-        # Por eso se agrega '?authSource=admin' a la URI de conexión.
         self.uri = f"mongodb://{self.user}:{self.password}@{self.host}:27017/{self.db_name}?authSource=admin"
 
     def connect(self):
