@@ -36,8 +36,6 @@ services:
       context: ./whatsapp
       dockerfile: Dockerfile
     container_name: whatsapp_bot_pea
-    ports:
-      - "3001:3000"
     restart: unless-stopped
     environment:
       - TZ=America/Asuncion
@@ -48,12 +46,12 @@ services:
       - platcom_net
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.whatsapp.rule=Host(`${DOMAIN_HOST}`) && PathPrefix(`/whatsapp_pea`)"
-      - "traefik.http.routers.whatsapp.entrypoints=web"
-      - "traefik.http.services.whatsapp.loadbalancer.server.port=3001"
-      - "traefik.http.middlewares.whatsapp-strip.stripprefix.prefixes=/whatsapp_pea"
-      - "traefik.http.middlewares.whatsapp-strip.stripprefix.forceSlash=true"
-      - "traefik.http.routers.whatsapp.middlewares=whatsapp-strip"
+      - "traefik.http.routers.whatsapp_pea.rule=Host(`${DOMAIN_HOST}`) && PathPrefix(`/whatsapp_pea`)"
+      - "traefik.http.routers.whatsapp_pea.entrypoints=web"
+      - "traefik.http.services.whatsapp_pea.loadbalancer.server.port=3000"
+      - "traefik.http.middlewares.whatsapp_pea-strip.stripprefix.prefixes=/whatsapp_pea"
+      - "traefik.http.middlewares.whatsapp_pea-strip.stripprefix.forceSlash=true"
+      - "traefik.http.routers.whatsapp_pea.middlewares=whatsapp_pea-strip"
 
 networks:
   platcom_net:
